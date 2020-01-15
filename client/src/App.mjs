@@ -193,8 +193,10 @@ export const update /*: Model => Action => {model: Model, effects: Effect[]} */
     const c = action.position[1];
 
 
+    const otherPlayerID = (model.playerNumber - 1) % 2 === PLAYER_ONE_ID ? PLAYER_TWO_ID : PLAYER_ONE_ID;
 
-    if(isShip(model.board[r][c][PLAYER_TWO_ID])) {
+
+    if(isShip(model.board[r][c][otherPlayerID])) {
       peg.type = "hit";
       //TODO check for ship down, or game over
     }
@@ -203,7 +205,7 @@ export const update /*: Model => Action => {model: Model, effects: Effect[]} */
     model = { ...model };
     model.board = model.board.slice();
     model.board[r] = model.board[r].slice();
-    model.board[r][c][PLAYER_TWO_ID] = peg;
+    model.board[r][c][otherPlayerID] = peg;
 
     effects = effects.concat(makeRequest(updateBoardRequestName,{
       method: 'PUT', path: 'boards/'+model.boardID, data: {board: {grid: JSON.stringify(model.board)}}
