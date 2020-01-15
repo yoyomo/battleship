@@ -130,6 +130,31 @@ const isShip = (item) => {
   return !!item && !!item.class;
 }
 
+const shipIsDown = (model,row,col,boardFace) => {
+  let shipBeingAttacked = model.board[row][col][boardFace];
+  for(let r=0; r< BOARD_N; r++){
+    for(let c=0; c< BOARD_N; c++){
+      if((r !== row || c !== col) && model.board[r][c][boardFace] && model.board[r][c][boardFace].class === shipBeingAttacked.class){
+        return false; 
+      }
+    }
+  }
+
+  return true;
+}
+
+const gameIsOver = (model, row,col, boardFace) => {
+  for(let r=0; r< BOARD_N; r++){
+    for(let c=0; c< BOARD_N; c++){
+      if((r !== row || c !== col) && model.board[r][c][boardFace] && model.board[r][c][boardFace].class){
+        return false; 
+      }
+    }
+  }
+
+  return true;
+}
+
 export const update = model => action => {
   let effects = [];
   switch (action.type) {
@@ -141,10 +166,17 @@ export const update = model => action => {
 
     const otherPlayerID = (model.playerNumber - 1) % 2 === PLAYER_ONE_ID ? PLAYER_TWO_ID : PLAYER_ONE_ID;
 
+    let isHit = false;
+
 
     if(isShip(model.board[r][c][otherPlayerID])) {
       peg.type = "hit";
-      //TODO check for ship down, or game over
+      if(shipIsDown(model,r,c,otherPlayerID)){
+        alert('Ship Down!');
+      }
+      if(gameIsOver(model, r,c, otherPlayerID)){
+        alert('Congratulations!! You Won!');
+      }
     }
 
 
