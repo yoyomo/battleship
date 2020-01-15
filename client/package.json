@@ -12,6 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "actioncable": "^5.2.4-1",
     "express": "^4.17.1",
     "http": "0.0.0",
     "muvjs": "^2.2.0"

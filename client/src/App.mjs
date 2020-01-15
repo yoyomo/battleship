@@ -175,6 +175,13 @@ const signIn = () => {
   }
 };
 
+const actionCableReceivedData = data => {
+  return {
+    type: "action-cable-received-data",
+    data
+  }
+};
+
 /*::
 type Action = Increment | Decrement | CompleteRequest | SignIn
 */
@@ -236,6 +243,8 @@ export const update /*: Model => Action => {model: Model, effects: Effect[]} */
         method: 'POST', path: 'boards', data: {board: {player_one_id: model.playerNumber, grid: JSON.stringify(model.board)}}
       }));
 
+      effects.push(connectToActionCable(model.playerNumber));
+
       break;
 
       case creatNewBoardRequestName:
@@ -252,6 +261,8 @@ export const update /*: Model => Action => {model: Model, effects: Effect[]} */
       effects = effects.concat(makeRequest(getActiveBoardRequestName,{
         method: 'GET', path: `users/${model.playerNumber-1}/active_board`
       }));
+
+      effects.push(connectToActionCable(model.playerNumber));
 
       break;
 
@@ -273,6 +284,12 @@ export const update /*: Model => Action => {model: Model, effects: Effect[]} */
     effects = effects.concat(makeRequest(getUsersRequestName,{
       method: 'GET', path: 'users'
     }));
+    break;
+
+    case "action-cable-received-data":
+    model = {...model};
+    model.board = JSON.parse(action.data.grid);
+
     break;
   }
   return {model, effects};
@@ -366,11 +383,22 @@ const makeRequest = (requestName,{method="GET",path="",data={}}) => {
   }
 };
 
+const connectToActionCable = id => {
+  return {
+    type: 'action-cable-connect',
+    id
+  }
+}
+
 /*::
 type Effect = AjaxRequest
 */
+import ActionCable from 'actioncable';
+
 
 export const subscriptions = dispatch => effect => {
+  let cable;
+
   switch (effect.type) {
     case "ajax-request":
     let xhr = new XMLHttpRequest();
@@ -384,6 +412,17 @@ export const subscriptions = dispatch => effect => {
     xhr.setRequestHeader('Content-Type', 'application/json');
 
     xhr.send(JSON.stringify(effect.data));
+    break;
+
+    case "action-cable-connect":
+    cable = ActionCable.createConsumer("ws://localhost:3000/cable?user_id="+effect.id);
+
+    cable.subscriptions.create('BoardChannel', {
+      received: board => {
+        console.log("action cable received",board);
+        dispatch(actionCableReceivedData(board));
+      }
+    });
     break;
   }
 
