@@ -46,7 +46,7 @@ class BoardsController < ApplicationController
 
     # Only allow a trusted parameter "white list" through.
     def board_params
-      params.require(:board).permit(:player_one_id, :player_two_id, :grid)
+      params.require(:board).permit(:player_one_id, :player_two_id, :grid, :last_player_id)
 
     end
   end

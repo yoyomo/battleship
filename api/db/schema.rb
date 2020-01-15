@@ -18,9 +18,11 @@ ActiveRecord::Schema.define(version: 2020_01_14_201654) do
   create_table "boards", force: :cascade do |t|
     t.bigint "player_one_id"
     t.bigint "player_two_id"
+    t.bigint "last_player_id"
     t.jsonb "grid"
     t.datetime "created_at", precision: 6, null: false
     t.datetime "updated_at", precision: 6, null: false
+    t.index ["last_player_id"], name: "index_boards_on_last_player_id"
     t.index ["player_one_id"], name: "index_boards_on_player_one_id"
     t.index ["player_two_id"], name: "index_boards_on_player_two_id"
   end
@@ -30,6 +32,7 @@ ActiveRecord::Schema.define(version: 2020_01_14_201654) do
     t.datetime "updated_at", precision: 6, null: false
   end
 
+  add_foreign_key "boards", "users", column: "last_player_id"
   add_foreign_key "boards", "users", column: "player_one_id"
   add_foreign_key "boards", "users", column: "player_two_id"
 end
