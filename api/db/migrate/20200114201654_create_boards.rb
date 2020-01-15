@@ -4,7 +4,7 @@ class CreateBoards < ActiveRecord::Migration[6.0]
  
     	t.references :player_one, index: true, foreign_key: {to_table: :users}
     	t.references :player_two, index: true, foreign_key: {to_table: :users}
-    	t.jsonb :board, array: true
+    	t.jsonb :grid
 
       t.timestamps
     end

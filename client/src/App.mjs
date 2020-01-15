@@ -61,6 +61,7 @@ const initializeBoard /*: () => BoardItem[][][] */
 
 const PLAYER_ONE_ID = 0;
 const PLAYER_TWO_ID = 1;
+
 const SHIPS = [
 { 
   class: "carrier",
@@ -131,7 +132,8 @@ const generateShips = board => {
 
 export const model =
 {
-  playerNumber: PLAYER_ONE_ID,
+  playerNumber: 1,
+  boardID: 1,
   board: generateShips(initializeBoard())
 };
 
@@ -202,6 +204,10 @@ export const update /*: Model => Action => {model: Model, effects: Effect[]} */
     model.board = model.board.slice();
     model.board[r] = model.board[r].slice();
     model.board[r][c][PLAYER_TWO_ID] = peg;
+
+    effects = effects.concat(makeRequest(updateBoardRequestName,{
+      method: 'PUT', path: 'boards/'+model.boardID, data: {board: {grid: JSON.stringify(model.board)}}
+    }));
     break;
 
     case "complete-request":
@@ -213,48 +219,78 @@ export const update /*: Model => Action => {model: Model, effects: Effect[]} */
     switch(action.requestName){
       case getUsersRequestName:
       const numberOfUsers = response.length;
-      if(numberOfUsers === 0 || numberOfUsers % 2 === 0){
-        // TODO create new board, with new users
-        effects = effects.concat(makeRequest(createNewUserRequestName,{
+
+      effects = effects.concat(makeRequest(
+        numberOfUsers === 0 || numberOfUsers % 2 === 0 ?
+        createFirstUserRequestName : createSecondUserRequestName,{
           method: 'POST', path: 'users'
         }));
-
-        effects = effects.concat(makeRequest(creatNewBoardRequestName,{
-          method: 'POST', path: 'boards'
-        }));
-      } else {
-        // TODO create user and match to board with previous user
-      }
       break;
 
-      case createNewUserRequestName: 
+      case createFirstUserRequestName: 
 
       model = {...model};
-      // model.currentUser
+      model.playerNumber = response.id;
+
+      effects = effects.concat(makeRequest(creatNewBoardRequestName,{
+        method: 'POST', path: 'boards', data: {board: {player_one_id: model.playerNumber, grid: JSON.stringify(model.board)}}
+      }));
+
+      break;
+
+      case creatNewBoardRequestName:
+      model = {...model};
+      model.boardID = response.id;
+
+      break;
+
+      case createSecondUserRequestName: 
+
+      model = {...model};
+      model.playerNumber = response.id;
+
+      effects = effects.concat(makeRequest(getActiveBoardRequestName,{
+        method: 'GET', path: `users/${model.playerNumber-1}/active_board`
+      }));
+
+      break;
+
+      case getActiveBoardRequestName:
+
+      model = {...model};
+      model.boardID = response.id;
+      model.board = JSON.parse(response.grid);
+
+      effects = effects.concat(makeRequest(addUserToExistingBoardRequestName,{
+        method: 'PUT', path: 'boards/'+model.boardID, data: {board: {player_two_id: model.playerNumber}}
+      }));
 
       break;
     } 
     break;
 
     case "sign-in":
-    // effects = effects.concat(makeRequest(getUsersRequestName,{
-      // method: 'GET', path: 'users'
-    // }));
+    effects = effects.concat(makeRequest(getUsersRequestName,{
+      method: 'GET', path: 'users'
+    }));
     break;
   }
   return {model, effects};
 };
 
 const getUsersRequestName = 'get-users';
-const createNewUserRequestName = 'create-new-user';
+const createFirstUserRequestName = 'create-first-user';
 const creatNewBoardRequestName = 'create-new-board';
+const createSecondUserRequestName = 'create-second-user';
+const getActiveBoardRequestName = 'get-active-board';
 const addUserToExistingBoardRequestName = 'add-user-to-existing-board';
 
+const updateBoardRequestName = 'update-board';
 // VIEW 
 
 export const BoardContent =  ({model, boardPlayerNumber, onAttack}) => {
 
-  const canAttack = model.playerNumber !== boardPlayerNumber;
+  const canAttack = (model.playerNumber - 1) % 2 !== boardPlayerNumber;
 
   return div()(model.board.map((row,r) => 
     div({key: 'row-'+r, 
@@ -298,9 +334,9 @@ export const view = dispatch => {
   return model => 
   div({style: 'display: flex; flex-direction: column;'})(
     [
-    , div({style: 'margin: 1rem'})(model.playerNumber === PLAYER_ONE_ID ? 'Your Board': 'Their Board')
+    , div({style: 'margin: 1rem'})((model.playerNumber - 1) % 2 === PLAYER_ONE_ID ? 'Your Board': 'Their Board')
     , BoardContent({model, boardPlayerNumber: PLAYER_ONE_ID, onAttack: dispatcher.onAttack})
-    , div({style: 'margin: 1rem'})(model.playerNumber === PLAYER_TWO_ID ? 'Your Board': 'Their Board')
+    , div({style: 'margin: 1rem'})((model.playerNumber - 1) % 2 === PLAYER_TWO_ID ? 'Your Board': 'Their Board')
     , BoardContent({model, boardPlayerNumber: PLAYER_TWO_ID,onAttack: dispatcher.onAttack})
 
     ]
@@ -347,7 +383,7 @@ export const subscriptions = dispatch => effect => {
     xhr.setRequestHeader('Accept', 'application/json');
     xhr.setRequestHeader('Content-Type', 'application/json');
 
-    xhr.send(effect.data);
+    xhr.send(JSON.stringify(effect.data));
     break;
   }
 

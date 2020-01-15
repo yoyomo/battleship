@@ -1,5 +1,5 @@
 class UsersController < ApplicationController
-  before_action :set_user, only: [:show, :update, :destroy]
+  before_action :set_user, only: [:show, :update, :destroy, :active_board]
 
   # GET /users
   def index
@@ -36,6 +36,10 @@ class UsersController < ApplicationController
   # DELETE /users/1
   def destroy
     @user.destroy
+  end
+
+  def active_board
+    render json: Board.where(player_one_id: @user.id).last
   end
 
   private
