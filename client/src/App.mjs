@@ -213,8 +213,6 @@ export const update /*: Model => Action => {model: Model, effects: Effect[]} */
     case "complete-request":
     let response = JSON.parse(action.xhr.responseText);
     console.log("Request Completed: ", response);
-    debugger
-
 
     switch(action.requestName){
       case getUsersRequestName:
