@@ -294,7 +294,7 @@ export const BoardContent =  ({model, boardPlayerNumber, onAttack}) => {
 
   return div()(model.board.map((row,r) => 
     div({key: 'row-'+r, 
-      style: `height: 42px; width: 100%; background-color: black; border: solid 1px white;
+      style: `height: 42px; width: 420px; background-color: black; border: solid 1px white;
       display: flex; flex-direction: row
       `})(
       row.map((col,c) => 
@@ -307,15 +307,24 @@ export const BoardContent =  ({model, boardPlayerNumber, onAttack}) => {
           onclick: canAttack ? () => onAttack([r,c]) : () => null
         })(
         item ? div({
-          style: 'color: white'})(
+          style: 'position: relative; color: white; height:100%; width:100%;'})(
           function(){
             if(!!item.type){
-              return item.type
+              return div({style: `
+                border-radius: 100%; position: absolute; 
+                height: 50%;
+                width: 50%;
+                top: 25%;
+                left: 25%;
+                background-color: ${item.type === 'hit' ? 'red' : 'white'}`})()
             }
             else if(!!item.class && isPlayersBoard){
-              return item.class
-            } else { //TODO remove this else
-              return 'nothing'
+              return div({style: `
+                border-radius: 100%; position: absolute; 
+                height: 50%;
+                width: 50%;
+                top: 25%;
+                left: 25%;`})(item.class[0])
             } 
           }()
           ) : undefined
